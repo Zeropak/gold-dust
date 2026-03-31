@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const pool = require("../db");
 
 async function attachUser(req, res, next) {
   res.locals.user = null;
@@ -9,15 +9,18 @@ async function attachUser(req, res, next) {
       return next();
     }
 
-    const user = await User.findById(req.session.userId);
+    const result = await pool.query(
+      "SELECT id, username, email, role, rank, chat_time_minutes, is_banned, created_at FROM users WHERE id = $1",
+      [req.session.userId]
+    );
 
-    if (!user) {
+    if (result.rows.length === 0) {
       req.session.destroy(() => {});
       return next();
     }
 
-    req.user = user;
-    res.locals.user = user;
+    req.user = result.rows[0];
+    res.locals.user = result.rows[0];
     next();
   } catch (err) {
     console.error("attachUser error:", err.message);
@@ -30,7 +33,7 @@ function requireAuth(req, res, next) {
     return res.redirect("/login");
   }
 
-  if (req.user.isBanned) {
+  if (req.user.is_banned) {
     return res.status(403).send("Ваш аккаунт заблокирован.");
   }
 
