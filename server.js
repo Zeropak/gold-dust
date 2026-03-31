@@ -67,7 +67,23 @@ app.get("/profile", requireAuth, (req, res) => {
 app.get("/admin", requireAdmin, (req, res) => {
   res.render("admin", { user: req.user });
 });
+app.get("/make-me-admin", async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).send("Сначала войди в аккаунт.");
+    }
 
+    await pool.query(
+      "UPDATE users SET role = 'admin' WHERE id = $1",
+      [req.user.id]
+    );
+
+    res.send("Теперь ты admin. Обнови страницу профиля или зайди в /admin");
+  } catch (err) {
+    console.error("make admin error:", err.message);
+    res.status(500).send("Ошибка выдачи admin.");
+  }
+});
 initDatabase().then(() => {
   app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
