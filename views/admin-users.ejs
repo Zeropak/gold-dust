@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Пользователи</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Управление пользователями</h1>
+
+    <div class="menu">
+      <a href="/admin">Назад в админку</a>
+      <a href="/">Главная</a>
+      <a href="/logout">Выход</a>
+    </div>
+
+    <br>
+
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Логин</th>
+          <th>Email</th>
+          <th>Роль</th>
+          <th>Ранг</th>
+          <th>Часы</th>
+          <th>Бан</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(u => { %>
+          <tr>
+            <td><%= u.id %></td>
+            <td><%= u.username %></td>
+            <td><%= u.email %></td>
+            <td><%= u.role %></td>
+            <td><%= u.rank %></td>
+            <td><%= Math.floor(u.chat_time_minutes / 60) %></td>
+            <td><%= u.is_banned ? "Да" : "Нет" %></td>
+            <td>
+              <form method="POST" action="/admin/users/<%= u.id %>/role" style="display:inline-block;">
+                <select name="role">
+                  <option value="user" <%= u.role === "user" ? "selected" : "" %>>user</option>
+                  <option value="moderator" <%= u.role === "moderator" ? "selected" : "" %>>moderator</option>
+                  <option value="admin" <%= u.role === "admin" ? "selected" : "" %>>admin</option>
+                </select>
+                <button type="submit">Сменить роль</button>
+              </form>
+
+              <% if (!u.is_banned) { %>
+                <form method="POST" action="/admin/users/<%= u.id %>/ban" style="display:inline-block;">
+                  <button type="submit">Бан</button>
+                </form>
+              <% } else { %>
+                <form method="POST" action="/admin/users/<%= u.id %>/unban" style="display:inline-block;">
+                  <button type="submit">Разбан</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
