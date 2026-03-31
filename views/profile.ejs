@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Профиль</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Профиль</h1>
+
+    <p><strong>Логин:</strong> <%= user.username %></p>
+    <p><strong>Email:</strong> <%= user.email %></p>
+    <p><strong>Роль:</strong> <%= user.role %></p>
+    <p><strong>Ранг:</strong> <%= user.rank %></p>
+    <p><strong>Часов в чате:</strong> <%= Math.floor(user.chatTimeMinutes / 60) %></p>
+
+    <div class="menu">
+      <a href="/">Главная</a>
+      <% if (user.role === "admin") { %>
+        <a href="/admin">Админка</a>
+      <% } %>
+      <a href="/logout">Выход</a>
+    </div>
+  </div>
+</body>
+</html>
