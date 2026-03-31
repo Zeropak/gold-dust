@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gold Dust</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Gold Dust</h1>
+    <p>Главная страница будущего блога / форума / чата.</p>
+
+    <% if (user) { %>
+      <p>Ты вошёл как <strong><%= user.username %></strong> (<%= user.role %>)</p>
+      <div class="menu">
+        <a href="/profile">Профиль</a>
+        <% if (user.role === "admin") { %>
+          <a href="/admin">Админка</a>
+        <% } %>
+        <a href="/logout">Выход</a>
+      </div>
+    <% } else { %>
+      <div class="menu">
+        <a href="/register">Регистрация</a>
+        <a href="/login">Вход</a>
+      </div>
+    <% } %>
+  </div>
+</body>
+</html>
