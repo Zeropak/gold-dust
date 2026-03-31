@@ -1,6 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const User = require("../models/User");
+const pool = require("../db");
 
 const router = express.Router();
 
@@ -20,28 +20,25 @@ router.post("/register", async (req, res) => {
       return res.render("register", { error: "Пароль должен быть минимум 6 символов." });
     }
 
-    const existingUser = await User.findOne({
-      $or: [{ username }, { email }]
-    });
+    const existing = await pool.query(
+      "SELECT id FROM users WHERE username = $1 OR email = $2",
+      [username, email.toLowerCase()]
+    );
 
-    if (existingUser) {
+    if (existing.rows.length > 0) {
       return res.render("register", { error: "Пользователь с таким логином или email уже существует." });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+    const result = await pool.query(
+      `INSERT INTO users (username, email, password_hash)
+       VALUES ($1, $2, $3)
+       RETURNING id`,
+      [username, email.toLowerCase(), passwordHash]
+    );
 
-    const user = new User({
-      username,
-      email,
-      passwordHash,
-      ipHistory: [String(ip)]
-    });
-
-    await user.save();
-
-    req.session.userId = user._id.toString();
+    req.session.userId = result.rows[0].id;
 
     return res.redirect("/profile");
   } catch (err) {
@@ -62,31 +59,28 @@ router.post("/login", async (req, res) => {
       return res.render("login", { error: "Заполни все поля." });
     }
 
-    const user = await User.findOne({ email });
+    const result = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email.toLowerCase()]
+    );
 
-    if (!user) {
+    if (result.rows.length === 0) {
       return res.render("login", { error: "Неверный email или пароль." });
     }
 
-    if (user.isBanned) {
+    const user = result.rows[0];
+
+    if (user.is_banned) {
       return res.render("login", { error: "Ваш аккаунт заблокирован." });
     }
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
       return res.render("login", { error: "Неверный email или пароль." });
     }
 
-    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
-    const ipString = String(ip);
-
-    if (!user.ipHistory.includes(ipString)) {
-      user.ipHistory.push(ipString);
-      await user.save();
-    }
-
-    req.session.userId = user._id.toString();
+    req.session.userId = user.id;
 
     return res.redirect("/profile");
   } catch (err) {
